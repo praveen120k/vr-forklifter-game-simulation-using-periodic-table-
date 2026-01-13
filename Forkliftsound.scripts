@@ -1,0 +1,60 @@
+using UnityEngine;
+
+public class ForkliftSound : MonoBehaviour
+{
+    public AudioSource engineSource;
+    public AudioSource reverseBeepSource;
+    public AudioSource hornSource;
+
+    public float minPitch = 0.8f;
+    public float maxPitch = 1.5f;
+
+    Rigidbody rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+
+        if (!engineSource.isPlaying)
+            engineSource.Play();
+    }
+
+    void Update()
+    {
+        HandleEngineSound();
+        HandleReverseBeep();
+        HandleHorn();
+    }
+
+    void HandleEngineSound()
+    {
+        float speed = rb.velocity.magnitude;
+
+        float pitch = Mathf.Lerp(minPitch, maxPitch, speed / 10f);
+        engineSource.pitch = pitch;
+    }
+
+    void HandleReverseBeep()
+    {
+        float move = Input.GetAxis("Vertical");
+
+        if (move < -0.2f)
+        {
+            if (!reverseBeepSource.isPlaying)
+                reverseBeepSource.Play();
+        }
+        else
+        {
+            if (reverseBeepSource.isPlaying)
+                reverseBeepSource.Stop();
+        }
+    }
+
+    void HandleHorn()
+    {
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            hornSource.Play();
+        }
+    }
+}
