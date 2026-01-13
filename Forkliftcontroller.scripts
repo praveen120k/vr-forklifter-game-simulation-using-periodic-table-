@@ -1,0 +1,95 @@
+using UnityEngine;
+
+public class ForkLiftController : MonoBehaviour
+{
+    [Header("Fork Lift")]
+    public Transform forkRoot;
+    public float liftSpeed = 1.5f;
+    public float minHeight = 0.1f;
+    public float maxHeight = 2.2f;
+
+    [Header("Pickup")]
+    public Transform liftPoint;
+    public float pickDistance = 0.5f;
+
+    Rigidbody carriedRb;
+    FixedJoint joint;
+
+    float currentHeight;
+
+    void Start()
+    {
+        currentHeight = forkRoot.localPosition.y;
+    }
+
+    void Update()
+    {
+        HandleLift();
+        HandlePickupDrop();
+    }
+
+    void HandleLift()
+    {
+        float lift = 0f;
+
+        if (Input.GetKey(KeyCode.E)) lift = 1f;   // UP
+        if (Input.GetKey(KeyCode.Q)) lift = -1f;  // DOWN
+
+        currentHeight += lift * liftSpeed * Time.deltaTime;
+        currentHeight = Mathf.Clamp(currentHeight, minHeight, maxHeight);
+
+        Vector3 pos = forkRoot.localPosition;
+        pos.y = currentHeight;
+        forkRoot.localPosition = pos;
+    }
+
+    void HandlePickupDrop()
+    {
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (carriedRb == null)
+                TryPickup();
+            else
+                Drop();
+        }
+    }
+
+    void TryPickup()
+    {
+        Collider[] hits = Physics.OverlapSphere(liftPoint.position, pickDistance);
+
+        foreach (Collider col in hits)
+        {
+            if (col.CompareTag("Crate"))
+            {
+                carriedRb = col.GetComponent<Rigidbody>();
+                if (carriedRb == null) return;
+
+                carriedRb.velocity = Vector3.zero;
+                carriedRb.angularVelocity = Vector3.zero;
+
+                joint = gameObject.AddComponent<FixedJoint>();
+                joint.connectedBody = carriedRb;
+                joint.breakForce = Mathf.Infinity;
+                joint.breakTorque = Mathf.Infinity;
+
+                return;
+            }
+        }
+    }
+
+    void Drop()
+    {
+        if (joint != null) Destroy(joint);
+        carriedRb = null;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (liftPoint != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(liftPoint.position, pickDistance);
+        }
+    }
+}
