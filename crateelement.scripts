@@ -1,0 +1,14 @@
+using UnityEngine;
+
+public class ElementCrate : MonoBehaviour
+{
+    public string elementSymbol; // Example: H, O, Na, Cl
+
+    [HideInInspector]
+    public Rigidbody rb;
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+}
