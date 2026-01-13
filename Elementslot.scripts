@@ -1,0 +1,50 @@
+using UnityEngine;
+
+public class ElementSlot : MonoBehaviour
+{
+    public string acceptElement;   // Correct element for this slot
+
+    public Transform snapPoint;     // Where crate should stay if correct
+
+    void OnTriggerEnter(Collider other)
+    {
+        ElementCrate crate = other.GetComponent<ElementCrate>();
+
+        if (crate == null) return;
+
+        if (crate.elementSymbol == acceptElement)
+        {
+            AcceptCrate(crate);
+        }
+        else
+        {
+            RejectCrate(crate);
+        }
+    }
+
+    void AcceptCrate(ElementCrate crate)
+    {
+        Rigidbody rb = crate.rb;
+
+        rb.isKinematic = true;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        crate.transform.position = snapPoint.position;
+        crate.transform.rotation = snapPoint.rotation;
+
+        crate.transform.SetParent(transform); // lock in slot
+
+        Debug.Log("✅ Correct Element Placed: " + crate.elementSymbol);
+    }
+
+    void RejectCrate(ElementCrate crate)
+    {
+        Rigidbody rb = crate.rb;
+
+        rb.isKinematic = false; // physics ON
+        rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+
+        Debug.Log("❌ Wrong Element: " + crate.elementSymbol);
+    }
+}
