@@ -1,0 +1,107 @@
+using UnityEngine;
+
+[RequireComponent(typeof(Rigidbody))]
+public class ForkliftDrive : MonoBehaviour
+{
+    [Header("Wheel Colliders")]
+    public WheelCollider wheelFL;
+    public WheelCollider wheelFR;
+    public WheelCollider wheelRL;
+    public WheelCollider wheelRR;
+
+    [Header("Wheel Meshes (Optional)")]
+    public Transform meshFL;
+    public Transform meshFR;
+    public Transform meshRL;
+    public Transform meshRR;
+
+    [Header("Drive Settings")]
+    public float motorPower = 1800f;
+    public float maxSpeed = 12f;
+    public float brakePower = 3000f;
+
+    [Header("Steering")]
+    public float maxSteerAngle = 30f;
+    public float steerSmooth = 6f;
+
+    Rigidbody rb;
+    float currentSteer;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+
+        // VERY IMPORTANT FOR STABILITY
+        rb.mass = 1800f;
+        rb.drag = 0.5f;
+        rb.angularDrag = 3f;
+        rb.centerOfMass = new Vector3(0, -0.6f, 0);
+    }
+
+    void FixedUpdate()
+    {
+        float move = Input.GetAxis("Vertical");   // W / S
+        float steer = Input.GetAxis("Horizontal"); // A / D
+
+        ApplyMotor(move);
+        ApplySteering(steer);
+        ApplyBrakes(move);
+        UpdateWheelMeshes();
+    }
+
+    void ApplyMotor(float move)
+    {
+        if (rb.velocity.magnitude < maxSpeed)
+        {
+            wheelRL.motorTorque = move * motorPower;
+            wheelRR.motorTorque = move * motorPower;
+        }
+        else
+        {
+            wheelRL.motorTorque = 0f;
+            wheelRR.motorTorque = 0f;
+        }
+    }
+
+    void ApplySteering(float steer)
+    {
+        float targetSteer = steer * maxSteerAngle;
+        currentSteer = Mathf.Lerp(currentSteer, targetSteer, Time.fixedDeltaTime * steerSmooth);
+
+        wheelFL.steerAngle = currentSteer;
+        wheelFR.steerAngle = currentSteer;
+    }
+
+    void ApplyBrakes(float move)
+    {
+        if (Mathf.Abs(move) < 0.05f)
+        {
+            wheelRL.brakeTorque = brakePower;
+            wheelRR.brakeTorque = brakePower;
+        }
+        else
+        {
+            wheelRL.brakeTorque = 0f;
+            wheelRR.brakeTorque = 0f;
+        }
+    }
+
+    void UpdateWheelMeshes()
+    {
+        UpdateWheel(wheelFL, meshFL);
+        UpdateWheel(wheelFR, meshFR);
+        UpdateWheel(wheelRL, meshRL);
+        UpdateWheel(wheelRR, meshRR);
+    }
+
+    void UpdateWheel(WheelCollider col, Transform mesh)
+    {
+        if (mesh == null) return;
+
+        Vector3 pos;
+        Quaternion rot;
+        col.GetWorldPose(out pos, out rot);
+        mesh.position = pos;
+        mesh.rotation = rot;
+    }
+}
